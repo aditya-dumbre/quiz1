@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quiz App</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --correct: #10b981;
+    --wrong: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --tag: #2d2d42;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(6,182,212,0.1) 0%, transparent 60%);
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; animation: fadeUp 0.4s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── NAME SCREEN ── */
+  .brand {
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent2);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 16px 20px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(124,58,237,0.15);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 32px;
+    cursor: pointer;
+    margin-top: 24px;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.35);
+  }
+
+  .btn:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 6px 32px rgba(124,58,237,0.45); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn.secondary {
+    background: var(--card);
+    box-shadow: none;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn.secondary:hover { background: var(--tag); box-shadow: none; }
+
+  /* ── QUIZ SCREEN ── */
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+  }
+
+  .q-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .q-counter span { color: var(--text); font-weight: 500; }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .score-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+  }
+
+  .q-tag {
+    display: inline-block;
+    background: var(--tag);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 5px 12px;
+    border-radius: 99px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+
+  .q-text {
+    font-size: clamp(17px, 2.5vw, 20px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 28px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    width: 100%;
+    color: var(--text);
+  }
+
+  .opt:hover:not(.locked) {
+    border-color: var(--accent);
+    background: rgba(124,58,237,0.08);
+    transform: translateX(3px);
+  }
+
+  .opt-letter {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--tag);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .opt.correct {
+    border-color: var(--correct);
+    background: rgba(16,185,129,0.1);
+  }
+
+  .opt.correct .opt-letter {
+    background: var(--correct);
+    color: #fff;
+  }
+
+  .opt.wrong {
+    border-color: var(--wrong);
+    background: rgba(239,68,68,0.1);
+  }
+
+  .opt.wrong .opt-letter {
+    background: var(--wrong);
+    color: #fff;
+  }
+
+  .opt.locked { cursor: default; }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    display: none;
+    animation: fadeUp 0.3s ease;
+    line-height: 1.5;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(16,185,129,0.12); color: var(--correct); border: 1px solid rgba(16,185,129,0.3); }
+  .feedback.wrong-fb { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+  .quiz-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  /* ── RESULT SCREEN ── */
+  .result-top {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--border) 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+    position: relative;
+  }
+
+  .score-circle::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: var(--card);
+  }
+
+  .score-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .score-num {
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .score-denom {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .result-title {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .result-sub { color: var(--muted); font-size: 14px; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 28px 0;
+  }
+
+  .stat-box {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+  }
+
+  .stat-val { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .stat-lbl { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .save-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  .save-note.ok { color: var(--correct); }
+  .save-note.err { color: var(--wrong); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- NAME SCREEN -->
+  <div class="screen active" id="screen-name">
+    <div class="brand">◈ Quiz Portal</div>
+    <h1>Test Your<br/>Knowledge</h1>
+    <p class="subtitle">40 questions spanning Maths, Java, Python &amp; Statistics.<br/>Enter your name to begin.</p>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Arjun Sharma" autocomplete="off" maxlength="60"/>
+    </div>
+    <button class="btn" id="startBtn" onclick="startQuiz()">Begin Quiz →</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-header">
+      <div class="q-counter">Q<span id="qNum">1</span> / 40</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="score-badge" id="scoreDisplay">Score: 0</div>
+    </div>
+    <div class="card">
+      <div class="q-tag" id="qTag">Category</div>
+      <div class="q-text" id="qText">Question text</div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="screen-result">
+    <div class="result-top">
+      <div class="score-circle" id="scoreCircle">
+        <div class="score-inner">
+          <div class="score-num" id="finalScore">0</div>
+          <div class="score-denom">/ 40</div>
+        </div>
+      </div>
+      <div class="result-title" id="resultTitle">Well done!</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="statCorrect" style="color:var(--correct)">0</div><div class="stat-lbl">Correct</div></div>
+      <div class="stat-box"><div class="stat-val" id="statWrong" style="color:var(--wrong)">0</div><div class="stat-lbl">Wrong</div></div>
+      <div class="stat-box"><div class="stat-val" id="statPct" style="color:var(--accent2)">0%</div><div class="stat-lbl">Score %</div></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn secondary" onclick="retakeQuiz()">↩ Retake</button>
+      <button class="btn" onclick="saveScore()">💾 Save Score</button>
+    </div>
+    <div class="save-note" id="saveNote"></div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────── DATA ───────────────────────────
+const ALL_QUESTIONS = [
+  { text:"What is the unit digit of 7^95?", options:["2","3","7","9"], answer:1, cat:"Maths" },
+  { text:"LCM of 12, 18, 24?", options:["36","48","72","96"], answer:2, cat:"Maths" },
+  { text:"A sum doubles in 8 years at simple interest. What is the rate?", options:["10%","12%","12.5%","15%"], answer:2, cat:"Maths" },
+  { text:"A train 150 m long passes in 15 s. Speed in km/h?", options:["36","40","45","54"], answer:0, cat:"Maths" },
+  { text:"What is 2^100 mod 3?", options:["0","1","2","3"], answer:1, cat:"Maths" },
+  { text:"A invests ₹5000 for 6 months, B invests ₹6000 for 4 months. Profit ratio A:B?", options:["5:4","4:5","5:6","6:5"], answer:0, cat:"Maths" },
+  { text:"CP = ₹400, SP = ₹500. Profit %?", options:["20%","25%","30%","15%"], answer:1, cat:"Maths" },
+  { text:"Probability of rolling an even number on a die?", options:["1/3","1/2","2/3","1/6"], answer:1, cat:"Maths" },
+  { text:"A finishes work in 10 days, B in 15 days. Together in how many days?", options:["5","6","8","12"], answer:1, cat:"Maths" },
+  { text:"20% of a number is 80. Find 35% of the same number.", options:["120","130","140","150"], answer:2, cat:"Maths" },
+  { text:"Which exception is NOT checked at compile time?", options:["IOException","SQLException","NullPointerException","FileNotFoundException"], answer:2, cat:"Java" },
+  { text:"What does String s = 'Hello' + 'World' output?", options:["HelloWorld","Hello","World","Error"], answer:0, cat:"Java" },
+  { text:"Which access modifier restricts access to the same class only?", options:["public","protected","default","private"], answer:3, cat:"Java" },
+  { text:"Method overloading means?", options:["Overriding a method","Same name, different parameters","Recursion","Returning void"], answer:1, cat:"Java" },
+  { text:"Which keyword prevents a class from being subclassed?", options:["static","abstract","final","sealed"], answer:2, cat:"Java" },
+  { text:"Which statement about abstract classes is TRUE?", options:["Cannot have any methods","Can be instantiated","Can have both abstract & concrete methods","Subclass must implement all methods always"], answer:2, cat:"Java" },
+  { text:"The 'super' keyword refers to?", options:["Current class","Parent class","New object","'this' reference"], answer:1, cat:"Java" },
+  { text:"Polymorphism means?", options:["Multiple constructors","Taking many forms","Multiple return types","Inheriting everything"], answer:1, cat:"Java" },
+  { text:"Correct SDLC order?", options:["Need→Req→Build→Deploy","Need→Req→Req→Write→Deploy","Plan→Code→Test→Release","Design→Code→Debug→Release"], answer:1, cat:"Java" },
+  { text:"Which interface must a class implement to create a thread?", options:["Serializable","Cloneable","Runnable","Iterable"], answer:2, cat:"Java" },
+  { text:"Which Python data type is immutable?", options:["List","Dict","Set","Tuple"], answer:3, cat:"Python" },
+  { text:"Correct Python exception handling syntax?", options:["try-catch","try-except","try-handle","do-catch"], answer:1, cat:"Python" },
+  { text:"Which block always executes in Python exception handling?", options:["except","else","finally","raise"], answer:2, cat:"Python" },
+  { text:"To create a user-defined exception in Python, you should?", options:["Use a keyword","Inherit from Exception class","Wrap in try block","Import exception module"], answer:1, cat:"Python" },
+  { text:"NumPy function to create array of zeros?", options:["np.empty()","np.zeros()","np.none()","np.blank()"], answer:1, cat:"Python" },
+  { text:"Pandas function to read a CSV file?", options:["pd.load_csv()","pd.open_csv()","pd.read_csv()","pd.import_csv()"], answer:2, cat:"Python" },
+  { text:"Matplotlib function to display a plot?", options:["plt.save()","plt.show()","plt.clear()","plt.close()"], answer:1, cat:"Python" },
+  { text:"SciPy sub-module for statistics?", options:["scipy.math","scipy.stats","scipy.data","scipy.calc"], answer:1, cat:"Python" },
+  { text:"Python module to connect to MySQL?", options:["sqlite3","pyodbc","mysql-connector-python","All of the above"], answer:3, cat:"Python" },
+  { text:"Output of type(3.14)?", options:["<class 'int'>","<class 'float'>","<class 'str'>","<class 'bool'>"], answer:1, cat:"Python" },
+  { text:"Which measure of central tendency is most affected by outliers?", options:["Median","Mode","Mean","Quartile"], answer:2, cat:"Statistics" },
+  { text:"IQR is calculated as?", options:["Q3 − Q1","Q2 − Q1","Q4 − Q1","Q3 − Q2"], answer:0, cat:"Statistics" },
+  { text:"A distribution with a longer right tail is called?", options:["Negatively skewed","Positively skewed","Symmetric","Uniform"], answer:1, cat:"Statistics" },
+  { text:"Bayes' theorem is used to calculate?", options:["Joint probability","Conditional probability","Mean","Variance"], answer:1, cat:"Statistics" },
+  { text:"A distribution with exactly two possible outcomes uses?", options:["Poisson","Normal","Binomial","Uniform"], answer:2, cat:"Statistics" },
+  { text:"Central Limit Theorem states?", options:["All distributions become normal","Sample means approach normal distribution","Variance equals standard deviation squared","Mean equals median always"], answer:1, cat:"Statistics" },
+  { text:"Z-test is preferred when sample size is?", options:["Small","Large with known variance","Categorical","Two variables"], answer:1, cat:"Statistics" },
+  { text:"Null hypothesis in a chi-square test of independence states?", options:["There is a relationship","Variables are independent","Means are equal","Variances are equal"], answer:1, cat:"Statistics" },
+  { text:"Cross-validation technique involves?", options:["Using full dataset for training","Rotating train/test splits","No splitting at all","Only for classification"], answer:1, cat:"Statistics" },
+  { text:"Poisson distribution models?", options:["Height of people","Count of events in fixed time/space","Binary outcomes","Continuous measurements"], answer:1, cat:"Statistics" },
+];
+
+// ─────────────────────────── STATE ───────────────────────────
+let userName = "";
+let questions = [];    // shuffled questions with shuffled option indices
+let currentIdx = 0;
+let score = 0;
+let answered = 0;
+let wrongs = 0;
+
+// ─────────────────────────── SHUFFLE ───────────────────────────
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function prepareQuestions() {
+  // Shuffle question order, then shuffle each question's options while tracking correct answer
+  return shuffleArray(ALL_QUESTIONS).map(q => {
+    // Create index array [0,1,2,3] and shuffle it
+    const indices = shuffleArray([0, 1, 2, 3]);
+    const shuffledOptions = indices.map(i => q.options[i]);
+    // Find new position of correct answer
+    const newCorrectIdx = indices.indexOf(q.answer);
+    // Option letters A-D for display
+    const letters = ["A", "B", "C", "D"];
+    const displayLetters = indices.map((_,pos) => letters[pos]);
+    return {
+      text: q.text,
+      cat: q.cat,
+      options: shuffledOptions,
+      correctIdx: newCorrectIdx,
+      letters: ["A","B","C","D"]
+    };
+  });
+}
+
+// ─────────────────────────── SCREENS ───────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ─────────────────────────── START ───────────────────────────
+function startQuiz() {
+  const input = document.getElementById('nameInput');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  userName = name;
+  questions = prepareQuestions();
+  currentIdx = 0; score = 0; answered = 0; wrongs = 0;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startQuiz();
+});
+
+// ─────────────────────────── RENDER QUESTION ───────────────────────────
+function renderQuestion() {
+  const q = questions[currentIdx];
+  document.getElementById('qNum').textContent = currentIdx + 1;
+  document.getElementById('progressFill').style.width = ((currentIdx / 40) * 100) + '%';
+  document.getElementById('scoreDisplay').textContent = 'Score: ' + score;
+  document.getElementById('qTag').textContent = q.cat;
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const optContainer = document.getElementById('options');
+  optContainer.innerHTML = '';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${q.letters[i]}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    optContainer.appendChild(btn);
+  });
+}
+
+// ─────────────────────────── ANSWER ───────────────────────────
+function selectAnswer(selectedIdx) {
+  const q = questions[currentIdx];
+  const opts = document.querySelectorAll('.opt');
+
+  // Lock all options
+  opts.forEach(o => o.classList.add('locked'));
+  opts.forEach(o => o.onclick = null);
+
+  const isCorrect = selectedIdx === q.correctIdx;
+  opts[selectedIdx].classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) opts[q.correctIdx].classList.add('correct');
+
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    score++;
+    answered++;
+    fb.className = 'feedback correct-fb show';
+    fb.innerHTML = '✓ Correct!';
+  } else {
+    answered++;
+    wrongs++;
+    fb.className = 'feedback wrong-fb show';
+    fb.innerHTML = `✗ Incorrect. Correct answer: <strong>${q.letters[q.correctIdx]}) ${q.options[q.correctIdx]}</strong>`;
+  }
+
+  document.getElementById('scoreDisplay').textContent = 'Score: ' + score;
+  document.getElementById('nextBtn').style.display = currentIdx < 39 ? 'inline-flex' : 'none';
+
+  if (currentIdx === 39) {
+    setTimeout(showResult, 900);
+  }
+}
+
+// ─────────────────────────── NEXT ───────────────────────────
+function nextQuestion() {
+  currentIdx++;
+  renderQuestion();
+}
+
+// ─────────────────────────── RESULT ───────────────────────────
+function showResult() {
+  showScreen('screen-result');
+  const pct = Math.round((score / 40) * 100);
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('statCorrect').textContent = score;
+  document.getElementById('statWrong').textContent = wrongs;
+  document.getElementById('statPct').textContent = pct + '%';
+
+  const circle = document.getElementById('scoreCircle');
+  circle.style.setProperty('--pct', pct);
+
+  let title, sub;
+  if (pct >= 90)      { title = "Outstanding! 🏆"; sub = "You aced this quiz. Incredible performance!"; }
+  else if (pct >= 75) { title = "Great Work! 🌟"; sub = "Well above average. You know your stuff!"; }
+  else if (pct >= 60) { title = "Good Job! 👍"; sub = "Solid performance. A bit more practice and you'll excel!"; }
+  else if (pct >= 40) { title = "Keep Practicing 📚"; sub = "You're getting there. Review the topics you missed!"; }
+  else                { title = "Don't Give Up! 💪"; sub = "Keep studying and try again. You'll improve!"; }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = `${userName}, you scored ${score} out of 40 (${pct}%)`;
+  document.getElementById('saveNote').textContent = '';
+}
+
+// ─────────────────────────── SAVE SCORE ───────────────────────────
+async function saveScore() {
+  const note = document.getElementById('saveNote');
+  note.className = 'save-note';
+  note.textContent = 'Saving…';
+  try {
+    const res = await fetch('/save_score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: userName, score: score })
+    });
+    if (res.ok) {
+      note.className = 'save-note ok';
+      note.textContent = '✓ Score saved to server successfully!';
+    } else {
+      throw new Error('Server error ' + res.status);
+    }
+  } catch (e) {
+    note.className = 'save-note err';
+    note.textContent = '✗ Could not save: ' + e.message + '. Run the Python server to enable saving.';
+  }
+}
+
+// ─────────────────────────── RETAKE ───────────────────────────
+function retakeQuiz() {
+  questions = prepareQuestions();
+  currentIdx = 0; score = 0; answered = 0; wrongs = 0;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+</script>
+</body>
+</html>
