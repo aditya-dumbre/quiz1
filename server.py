@@ -17,7 +17,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = int(os.environ.get("PORT", 8080))
-HTML_FILE = os.path.join(os.path.dirname(__file__), "index.html")
+HTML_FILE = os.path.join(os.path.dirname(__file__), "java.html")
 CSV_FILE  = os.path.join(os.path.dirname(__file__), "scores.csv")
 
 
