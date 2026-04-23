@@ -36,10 +36,24 @@ class QuizHandler(BaseHTTPRequestHandler):
 
     # ── GET ──────────────────────────────────────────────────────
     def do_GET(self):
-        if self.path in ("/", "/index.html", "/quiz.html"):
-            self._serve_file(HTML_FILE, "text/html")
+        if self.path in ("/", "/index.html"):
+            self._serve_file(os.path.join(os.path.dirname(__file__), "index.html"), "text/html")
+    
+        elif self.path == "/java":
+            self._serve_file(os.path.join(os.path.dirname(__file__), "java.html"), "text/html")
+    
+        elif self.path == "/python":
+            self._serve_file(os.path.join(os.path.dirname(__file__), "python.html"), "text/html")
+    
+        elif self.path == "/math-ai":
+            self._serve_file(os.path.join(os.path.dirname(__file__), "math_ai.html"), "text/html")
+    
+        elif self.path == "/data-analytics":
+            self._serve_file(os.path.join(os.path.dirname(__file__), "data_analytics.html"), "text/html")
+    
         elif self.path == "/scores":
             self._serve_scores()
+    
         else:
             self._send(404, "text/plain", b"Not found")
 
