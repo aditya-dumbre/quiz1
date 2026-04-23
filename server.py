@@ -36,7 +36,7 @@ class QuizHandler(BaseHTTPRequestHandler):
 
     # ── GET ──────────────────────────────────────────────────────
     def do_GET(self):
-        if self.path in ("/", "/index.html", "/quiz.html"):
+        if self.path in ("/", "/index.html", "/quiz1.html"):
             self._serve_file(HTML_FILE, "text/html")
         elif self.path == "/scores":
             self._serve_scores()
