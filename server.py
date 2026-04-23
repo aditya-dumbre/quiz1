@@ -17,7 +17,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = int(os.environ.get("PORT", 8080))
-HTML_FILE = os.path.join(os.path.dirname(__file__), "quiz.html")
+HTML_FILE = os.path.join(os.path.dirname(__file__), "index.html")
 CSV_FILE  = os.path.join(os.path.dirname(__file__), "scores.csv")
 
 
@@ -36,7 +36,7 @@ class QuizHandler(BaseHTTPRequestHandler):
 
     # ── GET ──────────────────────────────────────────────────────
     def do_GET(self):
-        if self.path in ("/", "/index.html", "/quiz1.html"):
+        if self.path in ("/", "/index.html", "/quiz.html"):
             self._serve_file(HTML_FILE, "text/html")
         elif self.path == "/scores":
             self._serve_scores()
@@ -49,7 +49,7 @@ class QuizHandler(BaseHTTPRequestHandler):
                 data = f.read()
             self._send(200, content_type, data)
         except FileNotFoundError:
-            self._send(404, "text/plain", b"quiz.html not found next to server.py")
+            self._send(404, "text/plain", b"index.html not found next to server.py")
 
     def _serve_scores(self):
         """Return all saved scores as JSON."""
